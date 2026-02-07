@@ -7,58 +7,15 @@ import (
 )
 
 type UserRepository struct {
+	*BaseRepository[models.User]
 	DB *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{DB: db}
-}
-
-func (r *UserRepository) Create(user *models.User) error {
-	return r.DB.Create(user).Error
-}
-
-func (r *UserRepository) FindByID(id uint) (*models.User, error) {
-	var user models.User
-	err := r.DB.First(&user, id).Error
-	if err != nil {
-		return nil, err
+	return &UserRepository{
+		BaseRepository: NewBaseRepository[models.User](db),
+		DB:             db,
 	}
-	return &user, nil
-}
-
-func (r *UserRepository) FindAll(page, limit int) ([]models.User, int64, error) {
-	var users []models.User
-	var total int64
-
-	offset := (page - 1) * limit
-
-	result := r.DB.Model(&models.User{}).Count(&total)
-	if result.Error != nil {
-		return nil, 0, result.Error
-	}
-
-	err := r.DB.Offset(offset).Limit(limit).Find(&users).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return users, total, nil
-}
-
-func (r *UserRepository) Update(user *models.User) error {
-	return r.DB.Save(user).Error
-}
-
-func (r *UserRepository) Delete(id uint) error {
-	result := r.DB.Delete(&models.User{}, id)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
 }
 
 func (r *UserRepository) FindByIDWithLock(id uint) (*models.User, error) {
